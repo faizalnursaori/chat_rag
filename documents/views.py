@@ -1,7 +1,9 @@
+from django.shortcuts import redirect, render
 from django.views.generic import View
-from django.shortcuts import render,redirect
+
 from .models import Document
 from .tasks import process_document
+
 
 # Create your views here.
 class DocumentUploadView(View):

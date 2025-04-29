@@ -1,7 +1,11 @@
 from huey.contrib.djhuey import task
-from documents.models import Document, DOC_STATUS_COMPLETE
+from langchain_experimental.text_splitter import SemanticChunker
+from langchain_openai.embeddings import OpenAIEmbeddings
+
 from core.ai.mistral import mistral
 from core.ai.prompt_manager import PromptManager
+from documents.models import DOC_STATUS_COMPLETE, Document
+import json
 
 
 @task()
@@ -16,15 +20,18 @@ def process_document(document: Document):
 
     signed_url = mistral.files.get_signed_url(file_id=uploaded_pdf.id)
 
-    ocr_result = mistral.ocr.process(
+    ocr_response = mistral.ocr.process(
         model="mistral-ocr-latest",
         document={"type": "document_url", "document_url": signed_url.url},
+        include_image_base64=False,
     )
+    # print(ocr_response)
 
     content = ""
 
-    for page in ocr_result.model_dump().get("pages", []):
-        content += page("markdown")
+    for page in ocr_response.model_dump().get("pages", []):
+        content += page["markdown"]
+    # print(ocr_response.model_dump())
 
     pm = PromptManager(model="gpt-4.1")
     pm.add_messages(
@@ -42,3 +49,8 @@ def process_document(document: Document):
     document.summary = summarized_content
     document.status = DOC_STATUS_COMPLETE
     document.save()
+
+    splitter = SemanticChunker(OpenAIEmbeddings())
+    documents = splitter.split_text(content)
+
+    print(json.dumps(documents, indent=2))
