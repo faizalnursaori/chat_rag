@@ -1,15 +1,19 @@
+import json
+
 from huey.contrib.djhuey import task
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
 
+from core.ai.chromadb import chroma, openai_ef
 from core.ai.mistral import mistral
 from core.ai.prompt_manager import PromptManager
 from documents.models import DOC_STATUS_COMPLETE, Document
-import json
+from core.methods import send_notifications
 
 
 @task()
 def process_document(document: Document):
+    send_notifications(notification_type="notification", content="Processing document")
     uploaded_pdf = mistral.files.upload(
         file={
             "file_name": document.file.name,
@@ -33,6 +37,7 @@ def process_document(document: Document):
         content += page["markdown"]
     # print(ocr_response.model_dump())
 
+    send_notifications(notification_type="notification", content="Summarizing")
     pm = PromptManager(model="gpt-4.1")
     pm.add_messages(
         role="system",
@@ -50,7 +55,17 @@ def process_document(document: Document):
     document.status = DOC_STATUS_COMPLETE
     document.save()
 
-    splitter = SemanticChunker(OpenAIEmbeddings())
-    documents = splitter.split_text(content)
+    send_notifications(notification_type="notification", content="Creating document")
 
-    print(json.dumps(documents, indent=2))
+    splitter = SemanticChunker(OpenAIEmbeddings())
+    documents = splitter.create_documents([content])
+
+    collection = chroma.create_collection(name=document.id, embedding_function=openai_ef)
+    collection.add(
+        documents=[doc.model_dump().get("page_content") for doc in documents],
+        ids=[str(i) for i in range(len(documents))]
+    )
+
+    send_notifications(notification_type="notification", content="Done")
+
+    # print(json.dumps(documents, indent=2))

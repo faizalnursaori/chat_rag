@@ -4,4 +4,5 @@ from .views import DocumentUploadView
 
 urlpatterns = [
     path("documents/", DocumentUploadView.as_view(), name="documents"),
+    # path("query/", QueryView.as_view(), name="documents"),
 ]
