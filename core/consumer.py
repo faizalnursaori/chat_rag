@@ -16,3 +16,27 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "message": message
         }))
+
+
+class ChatConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.document_id = self.scope["url_route"]["kwargs"]["document_id"]
+        self.group_name = f"chat_{self.document_id}"
+        
+        await self.accept()
+        await self.channel_layer.group_add("chat", self.channel_name)
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard("chat", self.channel_name)
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        message = data["message"]  
+
+        print(f"Received message: {message}")
+
+    async def send_message(self, event):
+        message = event["message"]
+        await self.send(text_data=json.dumps({
+            "message": message
+        }))
