@@ -7,8 +7,8 @@ from langchain_openai.embeddings import OpenAIEmbeddings
 from core.ai.chromadb import chroma, openai_ef
 from core.ai.mistral import mistral
 from core.ai.prompt_manager import PromptManager
-from documents.models import DOC_STATUS_COMPLETE, Document
 from core.methods import send_notifications
+from documents.models import DOC_STATUS_COMPLETE, Document
 
 
 @task()
@@ -41,12 +41,9 @@ def process_document(document: Document):
     pm = PromptManager(model="gpt-4.1")
     pm.add_messages(
         role="system",
-        content="Please summarize the provided text. Extract also the key points"
-        )
-    pm.add_messages(
-        role="system",
-        content=f"Content: {content}"
+        content="Please summarize the provided text. Extract also the key points",
     )
+    pm.add_messages(role="system", content=f"Content: {content}")
 
     summarized_content = pm.generate()
 
@@ -60,10 +57,12 @@ def process_document(document: Document):
     splitter = SemanticChunker(OpenAIEmbeddings())
     documents = splitter.create_documents([content])
 
-    collection = chroma.create_collection(name=document.id, embedding_function=openai_ef)
+    collection = chroma.create_collection(
+        name=document.id, embedding_function=openai_ef
+    )
     collection.add(
         documents=[doc.model_dump().get("page_content") for doc in documents],
-        ids=[str(i) for i in range(len(documents))]
+        ids=[str(i) for i in range(len(documents))],
     )
 
     send_notifications(notification_type="notification", content="Done")

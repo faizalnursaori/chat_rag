@@ -1,17 +1,18 @@
 from django.shortcuts import redirect, render
 from django.views.generic import View
 
-# from core.ai.chromadb import chroma, openai_ef
-
 from .models import Document
 from .tasks import process_document
+
+# from core.ai.chromadb import chroma, openai_ef
+
 
 
 # Create your views here.
 class DocumentUploadView(View):
     def get(self, request):
-        return render(request, template_name='documents/index.html')
-    
+        return render(request, template_name="documents/index.html")
+
     def post(self, request):
         file = request.FILES.get("file")
 
@@ -23,11 +24,12 @@ class DocumentUploadView(View):
             print(e)
 
         return redirect("documents")
-    
+
+
 # class QueryView(View):
 #     def get(self, request):
 #         return render(request, template_name='documents/query.html')
-    
+
 #     def post(self, request):
 #         query = request.POST.get("query")
 

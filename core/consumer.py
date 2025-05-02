@@ -2,6 +2,8 @@ import json
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from chats.tasks import process_chat
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -13,16 +15,14 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     async def send_notification(self, event):
         message = event["message"]
-        await self.send(text_data=json.dumps({
-            "message": message
-        }))
+        await self.send(text_data=json.dumps({"message": message}))
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.document_id = self.scope["url_route"]["kwargs"]["document_id"]
         self.group_name = f"chat_{self.document_id}"
-        
+
         await self.accept()
         await self.channel_layer.group_add("chat", self.channel_name)
 
@@ -31,12 +31,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        message = data["message"]  
+        message = data["message"]
 
-        print(f"Received message: {message}")
+        # print(f"Received message: {message}")
+        process_chat(message, self.document_id)
 
     async def send_message(self, event):
         message = event["message"]
-        await self.send(text_data=json.dumps({
-            "message": message
-        }))
+        await self.send(text_data=json.dumps({"message": message}))

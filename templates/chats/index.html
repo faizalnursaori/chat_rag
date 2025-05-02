@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<textarea id="chat-message"></textarea>
+<button id="submit" type="submit">Send</button>
+
+<div id="chats"></div>
+
+<script>
+  const ws = new WebSocket("ws://localhost:8000/ws/chat/{{document_id}}/");
+  const chatContainer = document.getElementById("chats")
+
+  const submitBtn = document.getElementById("submit")
+  submitBtn.onclick = () => {
+    const message = document.getElementById("chat-message")
+    const inputValue = message.value
+    // console.log(inputValue)
+
+    const userMessage = document.createElement("p")
+    userMessage.innerText = inputValue
+    chatContainer.appendChild(userMessage)
+
+    ws.send(JSON.stringify({
+      "message": inputValue
+    }))
+
+    message.value = ""
+  }
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    // console.log(data)
+
+    const chatContainer = document.getElementById("chats")
+    const message = document.createElement("p")
+    message.innerText = data.message
+    chatContainer.appendChild(message)
+  };
+
+  ws.onopen = () => {
+    console.log("Connected");
+  };
+
+  ws.onclose = () => {
+    console.log("Disconnected");
+  };
+
+</script>
+{% endblock content %}

@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "documents",
     "huey.contrib.djhuey",
-    "channels"
+    "channels",
 ]
 
 MIDDLEWARE = [
