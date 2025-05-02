@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "documents",
     "huey.contrib.djhuey",
     "channels",
+    "chats"
 ]
 
 MIDDLEWARE = [
